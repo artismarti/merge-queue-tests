@@ -46,6 +46,8 @@ jobs:
   minute-divisible-by-3:
     needs: [detect-relevant-changes]
     runs-on: ubuntu-latest
+    # ← only run if detect said “true”
+    if: ${{ needs.detect-relevant-changes.outputs.should-build-deploy == 'true' }}
     steps:
       - name: Check current minute % 3
         run: |
