@@ -45,22 +45,22 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
           list-files: none
           filters: |
-            app:
-              - '**/*'
-              - '!ignoreMe.js'
+            skip:
+              - 'ignoreMe.js'
+              - 'doNotTest/**'
       # skip if only ignoreMe.js changed
       - name: Debug filter output
         run: |
-          echo "steps.relevant-changes.outputs.app = '${{ steps.relevant-changes.outputs.app }}'"
+          echo "steps.relevant-changes.outputs.app = '${{ steps.relevant-changes.outputs.skip }}'"
           echo "all outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
     outputs:
-      should-build-deploy: steps.relevant-changes.outputs.app
+      should-skip: steps.relevant-changes.outputs.skip
 
   minute-divisible-by-3:
     runs-on: ubuntu-latest
     # ← only run if detect said “true”
     needs: [detect-relevant-changes]
-    if: ${{ needs.detect-relevant-changes.outputs.should-build-deploy }}
+    if: ${{ needs.detect-relevant-changes.outputs.should-skip }}
     steps:
       - name: Check current minute % 3
         run: |
