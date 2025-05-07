@@ -41,15 +41,15 @@ jobs:
               - 'thisCanChange/**'  # Only run if files in this path are changed
       - name: Debug filter output here
         run: |
-          echo "steps.relevant-changes.outputs.allowed = '${{ steps.relevant-changes.outputs.allowed }}'"
-          echo "all outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
+          echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
+          echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
     outputs:
       should-run: steps.relevant-changes.outputs.allowed
 
   minute-divisible-by-3:
     runs-on: ubuntu-latest
     needs: [detect-relevant-changes]
-    if: ${{ needs.detect-relevant-changes.outputs.should-run }}
+    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
     steps:
       - name: Check current minute % 3
         run: |
