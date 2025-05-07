@@ -43,11 +43,16 @@ jobs:
         with:
           base: main
           ref: ${{ github.event.workflow_run.head_branch }}
+          list-files: none
           filters: |
             app:
               - '**/*'
               - '!ignoreMe.js'
-    # skip if only ignoreMe.js changed
+      # skip if only ignoreMe.js changed
+      - name: Debug filter output
+        run: |
+          echo "steps.relevant-changes.outputs.app = '${{ steps.relevant-changes.outputs.app }}'"
+          echo "all outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
     outputs:
       should-build-deploy: steps.relevant-changes.outputs.app
 
