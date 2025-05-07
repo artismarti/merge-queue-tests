@@ -5,34 +5,25 @@ on:
     types: [completed]
 
 jobs:
-  on-pr-verify-success:
+  is-pr-verify-success:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - run: echo 'PR Verify workflow passed 🎉'
-  on-is-not-merge-queue-branch-success:
+  is-not-merge-queue-branch-success:
     runs-on: ubuntu-latest
+    needs: is-pr-verify-success
     if: ${{ github.event.workflow_run.pull_requests }}
     steps:
       - run: echo 'This is not a merge queue branch - continuing 🍉'
-  on-pr-verify-failure:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-    steps:
-      - run: echo 'PR Verify workflow failed'
-  on-is-not-merge-queue-branch-failure:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.pull_requests }}
-    steps:
-      - run: echo 'This is a merge queue branch - skipping'
 
   detect-relevant-changes:
     runs-on: ubuntu-latest
-    needs: [on-pr-verify-success, on-is-not-merge-queue-branch-success]
     # This job is only run when:
     # 1) the workflow_run event has pull_requests
     # Merge queue branches do not have pull_requests
     # 2) the workflow_run event conclusion is 'success'
+    needs: [is-pr-verify-success, is-not-merge-queue-branch-success]
 
     steps:
       - uses: actions/checkout@v4
