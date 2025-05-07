@@ -5,14 +5,14 @@ on:
     types: [completed]
 
 jobs:
-  is-pr-verify-success:
+  pr-verify-successful:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - run: echo 'PR Verify workflow passed 🎉'
-  is-not-merge-queue-branch-success:
+  is-not-merge-queue-branch:
     runs-on: ubuntu-latest
-    needs: is-pr-verify-success
+    needs: pr-verify-successful
     if: ${{ github.event.workflow_run.pull_requests }}
     steps:
       - run: echo 'This is not a merge queue branch - continuing 🍉'
@@ -22,8 +22,8 @@ jobs:
     # This job is only run when:
     # 1) the workflow_run event has pull_requests
     # Merge queue branches do not have pull_requests
-    # 2) the workflow_run event conclusion is 'success'
-    needs: [is-pr-verify-success, is-not-merge-queue-branch-success]
+    # 2) the pr-verify workflow conclusion is 'success'
+    needs: [pr-verify-successful, is-not-merge-queue-branch]
 
     steps:
       - uses: actions/checkout@v4
@@ -44,9 +44,9 @@ jobs:
       should-build-deploy: steps.relevant-changes.outputs.app
 
   minute-divisible-by-3:
-    needs: [detect-relevant-changes]
     runs-on: ubuntu-latest
     # ← only run if detect said “true”
+    needs: [detect-relevant-changes]
     if: ${{ needs.detect-relevant-changes.outputs.should-build-deploy == 'true' }}
     steps:
       - name: Check current minute % 3
