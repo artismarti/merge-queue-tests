@@ -30,3 +30,30 @@ jobs:
             echo "Odd → PASS"
             exit 0
           fi
+  check-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Detect relevant changes
+        uses: dorny/paths-filter@v3
+        id: relevant-changes
+        with:
+          base: "main"
+          ref: ${{ github.ref }}
+          filters: |
+            allowed:
+              - 'thisCanChange/**'  # Only run if files in this path are changed
+      - name: Debug filter output here
+        run: |
+          echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
+          echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
+      - name: Allowed echo
+        if: ${{ steps.relevant-changes.outputs.allowed == true }}
+        run: echo "✅ Changes detected in thisCanChange/** — running downstream steps"
+      - name: Not Allowed echo
+        if: ${{ steps.relevant-changes.outputs.allowed == false }}
+        run: echo "🚨 Changes not detected in thisCanChange/** — running downstream steps"
