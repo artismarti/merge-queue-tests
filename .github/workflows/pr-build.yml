@@ -1,62 +1,46 @@
 name: PR Build and Deploy
 on:
-  # temporary workaround for
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to build/deploy"
-        required: true
-  # workflow_run:
-  #   workflows: [PR Verify]
-  #   types: [completed]
+  workflow_run:
+    workflows: [PR Verify]
+    types: [completed]
 
 jobs:
-  # pr-verify-successful:
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.workflow_run.conclusion == 'success' }}
-  #   steps:
-  #     - run: echo 'PR Verify workflow passed 🎉'
-  # is-not-merge-queue-branch:
-  #   runs-on: ubuntu-latest
-  #   needs: pr-verify-successful
-  #   if: ${{ github.event.workflow_run.pull_requests }}
-  #   steps:
-  #     - run: echo 'This is not a merge queue branch - continuing 🍉'
+  pr-verify-successful:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: echo 'PR Verify workflow passed 🎉'
+  is-not-merge-queue-branch:
+    runs-on: ubuntu-latest
+    needs: pr-verify-successful
+    if: ${{ github.event.workflow_run.pull_requests }}
+    steps:
+      - run: echo 'This is not a merge queue branch - continuing 🍉'
 
   detect-relevant-changes:
     runs-on: ubuntu-latest
     # This job is only run when:
-    # 1) the workflow_run event has pull_requests
-    # Merge queue branches do not have pull_requests
+    # 1) the workflow_run event has pull_requests - Merge queue branches do not have pull_requests
     # 2) the pr-verify workflow conclusion is 'success'
-    # needs: [pr-verify-successful, is-not-merge-queue-branch]
+    needs: [pr-verify-successful, is-not-merge-queue-branch]
 
     steps:
       - uses: actions/checkout@v4
         with:
-          # needs explicit ref to checkout the PR branch
-          # because triggers from workflow-run default to the base branch of the PR as ref
-          ref: ${{ github.event.inputs.branch }}
-          fetch-depth: 2
-          # # because triggers from workflow-run default to the base branch of the PR as ref
-          # ref: ${{ github.event.workflow_run.head_branch }}
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
 
       - name: Detect relevant changes
         uses: dorny/paths-filter@v3
         id: relevant-changes
         with:
-          base: HEAD~1
-          # base: "main"
-          ref: HEAD
-          # list-files: none
-          # ref: ${{ github.event.workflow_run.head_branch }}
-
+          base: "main"
+          ref: ${{ github.event.workflow_run.head_branch }}
           filters: |
             allowed:
               - '**/*'                # all files…
               - '!ignoreMe.js'        # …except these
               - '!doNotTest/**'
-      # skip if only ignored files changed
       - name: Debug filter output here
         run: |
           echo "steps.relevant-changes.outputs.allowed = '${{ steps.relevant-changes.outputs.allowed }}'"
@@ -66,7 +50,6 @@ jobs:
 
   minute-divisible-by-3:
     runs-on: ubuntu-latest
-    # ← only run if detect said “true”
     needs: [detect-relevant-changes]
     if: ${{ needs.detect-relevant-changes.outputs.should-run }}
     steps:

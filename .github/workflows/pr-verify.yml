@@ -1,32 +1,32 @@
-# name: PR Verify
+name: PR Verify
 
-# on:
-#   pull_request:
-#     branches: [main]
-#     types:
-#       - opened
-#       - reopened
-#       - synchronize
-#       - labeled
-#       - unlabeled
-#       - ready_for_review
+on:
+  pull_request:
+    branches: [main]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+      - ready_for_review
 
-#   merge_group:
-#     types: [checks_requested]
+  merge_group:
+    types: [checks_requested]
 
-# jobs:
-#   odd-number-check:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Generate random number and test odd/even
-#         run: |
-#           num=$(( RANDOM % 100 ))
-#           echo "Number is $num"
-#           if (( num % 2 == 0 )); then
-#             echo "Even → FAIL"
-#             echo "Faking passing because we know that this bit works correctly as a trigger"
-#             exit 0
-#           else
-#             echo "Odd → PASS"
-#             exit 0
-#           fi
+jobs:
+  odd-number-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate random number and test odd/even
+        run: |
+          num=$(( RANDOM % 100 ))
+          echo "Number is $num"
+          if (( num % 2 == 0 )); then
+            echo "Even → FAIL"
+            echo "Faking passing because we know that this bit works correctly as a trigger"
+            exit 0
+          else
+            echo "Odd → PASS"
+            exit 0
+          fi
