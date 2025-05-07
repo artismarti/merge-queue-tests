@@ -51,7 +51,7 @@ jobs:
       # skip if only ignoreMe.js changed
       - name: Debug filter output
         run: |
-          echo "steps.relevant-changes.outputs.app = '${{ steps.relevant-changes.outputs.skip }}'"
+          echo "steps.relevant-changes.outputs.skip = '${{ steps.relevant-changes.outputs.skip }}'"
           echo "all outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
     outputs:
       should-skip: steps.relevant-changes.outputs.skip
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     # ← only run if detect said “true”
     needs: [detect-relevant-changes]
-    if: ${{ needs.detect-relevant-changes.outputs.should-skip }}
+    if: ${{ ! needs.detect-relevant-changes.outputs.should-skip }}
     steps:
       - name: Check current minute % 3
         run: |
