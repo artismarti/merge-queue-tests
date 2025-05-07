@@ -37,13 +37,15 @@ jobs:
           # needs explicit ref to checkout the PR branch
           # because triggers from workflow-run default to the base branch of the PR as ref
           ref: ${{ github.event.inputs.branch }}
+          fetch-depth: 0
           # # because triggers from workflow-run default to the base branch of the PR as ref
           # ref: ${{ github.event.workflow_run.head_branch }}
+
       - name: Detect relevant changes
         uses: dorny/paths-filter@v3
         id: relevant-changes
         with:
-          base: main
+          base: "main"
           ref: ${{ github.event.inputs.branch }}
           # list-files: none
           # ref: ${{ github.event.workflow_run.head_branch }}
