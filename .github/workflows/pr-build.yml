@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     # ← only run if detect said “true”
     needs: [detect-relevant-changes]
-    if: ${{ needs.detect-relevant-changes.outputs.should-build-deploy == 'true' }}
+    if: ${{ needs.detect-relevant-changes.outputs.should-build-deploy }}
     steps:
       - name: Check current minute % 3
         run: |
