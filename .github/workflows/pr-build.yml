@@ -38,9 +38,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
           filters: |
             allowed:
-              - '**/*'                # all files…
-              - '!ignoreMe.js'        # …except these
-              - '!doNotTest/**'
+              - 'thisCanChange/**'  # Only run if files in this path are changed
       - name: Debug filter output here
         run: |
           echo "steps.relevant-changes.outputs.allowed = '${{ steps.relevant-changes.outputs.allowed }}'"
