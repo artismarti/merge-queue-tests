@@ -1,0 +1,47 @@
+name: PR Build & Deploy (Minute Check)
+
+on:
+  workflow_run:
+    workflows: ["PR Verify"]
+    types: [completed]
+
+jobs:
+  detect-relevant-changes:
+    runs-on: ubuntu-latest
+    # This job is only run when:
+    # 1) the workflow_run event has pull_requests
+    # Merge queue branches do not have pull_requests
+    # 2) the workflow_run event conclusion is 'success'
+    if: ${{ github.event.workflow_run.pull_requests && github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # needs explicit ref to checkout the PR branch
+          # because triggers from workflow-run default to the base branch of the PR as ref
+          ref: ${{ github.event.workflow_run.head_branch }}
+      - name: Detect relevant changes
+        uses: dorny/paths-filter@v3
+        id: relevant-changes
+        with:
+          filters: |
+            app:
+              - '**/*'
+              - '!ignoreMe.js'
+    # skip if only ignoreMe.js changed
+    outputs:
+      should-build-deploy: steps.relevant-changes.outputs.app
+
+  minute-divisible-by-3:
+    needs: [detect-relevant-changes]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check current minute % 3
+        run: |
+          minute=$(date +'%M')
+          echo "Current minute: $minute"
+          if (( minute % 3 != 0 )); then
+            echo "Minute not divisible by 3 → FAIL"
+            exit 1
+          else
+            echo "Minute ÷ 3 → PASS"
+          fi

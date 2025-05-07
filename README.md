@@ -1,2 +1,2 @@
 # merge-queue-tests
-Temp repo to test merge queues with github actions
+testing trigger workflow runs from the result of other workflows 

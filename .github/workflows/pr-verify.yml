@@ -1,0 +1,30 @@
+name: PR Verify
+
+on:
+  pull_request:
+    branches: [main]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+      - ready_for_review
+
+  merge_group:
+    types: [checks_requested]
+
+jobs:
+  odd-number-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate random number and test odd/even
+        run: |
+          num=$(( RANDOM % 100 ))
+          echo "Number is $num"
+          if (( num % 2 == 0 )); then
+            echo "Even → FAIL"
+            exit 1
+          else
+            echo "Odd → PASS"
+          fi
