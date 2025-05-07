@@ -36,31 +36,36 @@ jobs:
         with:
           # needs explicit ref to checkout the PR branch
           # because triggers from workflow-run default to the base branch of the PR as ref
-          ref: ${{ github.event.workflow_run.head_branch }}
+          ref: ${{ github.event.inputs.branch }}
+          # # because triggers from workflow-run default to the base branch of the PR as ref
+          # ref: ${{ github.event.workflow_run.head_branch }}
       - name: Detect relevant changes
         uses: dorny/paths-filter@v3
         id: relevant-changes
         with:
           base: main
-          ref: ${{ github.event.workflow_run.head_branch }}
-          # list-files: none
+          ref: ${{ github.event.inputs.branch }}
+          list-files: none
+          # ref: ${{ github.event.workflow_run.head_branch }}
+
           filters: |
-            skip:
-              - 'ignoreMe.js'
-              - 'doNotTest/**'
-      # skip if only ignoreMe.js changed
+            allowed:
+              - '**/*'                # all files…
+              - '!ignoreMe.js'        # …except these
+              - '!doNotTest/**'
+      # skip if only ignored files changed
       - name: Debug filter output
         run: |
-          echo "steps.relevant-changes.outputs.skip = '${{ steps.relevant-changes.outputs.skip }}'"
+          echo "steps.relevant-changes.outputs.allowed = '${{ steps.relevant-changes.outputs.allowed }}'"
           echo "all outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
     outputs:
-      should-skip: steps.relevant-changes.outputs.skip
+      should-run: steps.relevant-changes.outputs.allowed
 
   minute-divisible-by-3:
     runs-on: ubuntu-latest
     # ← only run if detect said “true”
     needs: [detect-relevant-changes]
-    if: ${{ ! needs.detect-relevant-changes.outputs.should-skip }}
+    if: ${{ needs.detect-relevant-changes.outputs.should-run }}
     steps:
       - name: Check current minute % 3
         run: |
