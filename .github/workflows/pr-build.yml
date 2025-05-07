@@ -2,7 +2,7 @@ name: PR Build & Deploy (Minute Check)
 
 on:
   workflow_run:
-    workflows: ["PR Verify"]
+    workflows: [PR Verify]
     types: [completed]
 
 jobs:
