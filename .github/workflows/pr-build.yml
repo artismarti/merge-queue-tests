@@ -43,7 +43,7 @@ jobs:
         with:
           base: main
           ref: ${{ github.event.workflow_run.head_branch }}
-          list-files: none
+          # list-files: none
           filters: |
             skip:
               - 'ignoreMe.js'
