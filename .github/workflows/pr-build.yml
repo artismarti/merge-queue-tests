@@ -45,7 +45,7 @@ jobs:
         with:
           base: main
           ref: ${{ github.event.inputs.branch }}
-          list-files: none
+          # list-files: none
           # ref: ${{ github.event.workflow_run.head_branch }}
 
           filters: |
@@ -54,7 +54,7 @@ jobs:
               - '!ignoreMe.js'        # …except these
               - '!doNotTest/**'
       # skip if only ignored files changed
-      - name: Debug filter output
+      - name: Debug filter output here
         run: |
           echo "steps.relevant-changes.outputs.allowed = '${{ steps.relevant-changes.outputs.allowed }}'"
           echo "all outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
