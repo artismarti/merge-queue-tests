@@ -6,22 +6,22 @@ on:
       branch:
         description: "Branch to build/deploy"
         required: true
-  workflow_run:
-    workflows: [PR Verify]
-    types: [completed]
+  # workflow_run:
+  #   workflows: [PR Verify]
+  #   types: [completed]
 
 jobs:
-  pr-verify-successful:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    steps:
-      - run: echo 'PR Verify workflow passed 🎉'
-  is-not-merge-queue-branch:
-    runs-on: ubuntu-latest
-    needs: pr-verify-successful
-    if: ${{ github.event.workflow_run.pull_requests }}
-    steps:
-      - run: echo 'This is not a merge queue branch - continuing 🍉'
+  # pr-verify-successful:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  #   steps:
+  #     - run: echo 'PR Verify workflow passed 🎉'
+  # is-not-merge-queue-branch:
+  #   runs-on: ubuntu-latest
+  #   needs: pr-verify-successful
+  #   if: ${{ github.event.workflow_run.pull_requests }}
+  #   steps:
+  #     - run: echo 'This is not a merge queue branch - continuing 🍉'
 
   detect-relevant-changes:
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ jobs:
     # 1) the workflow_run event has pull_requests
     # Merge queue branches do not have pull_requests
     # 2) the pr-verify workflow conclusion is 'success'
-    needs: [pr-verify-successful, is-not-merge-queue-branch]
+    # needs: [pr-verify-successful, is-not-merge-queue-branch]
 
     steps:
       - uses: actions/checkout@v4
