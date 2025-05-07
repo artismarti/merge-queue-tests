@@ -49,7 +49,7 @@ jobs:
   minute-divisible-by-3:
     runs-on: ubuntu-latest
     needs: [detect-relevant-changes]
-    if: ${{ needs.detect-relevant-changes.outputs.should-run == true }}
+    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
     steps:
       - name: Check current minute % 3
         run: |

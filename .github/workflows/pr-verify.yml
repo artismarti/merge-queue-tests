@@ -52,8 +52,8 @@ jobs:
           echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
           echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
       - name: Allowed echo
-        if: ${{ steps.relevant-changes.outputs.allowed == true }}
+        if: ${{ steps.relevant-changes.outputs.allowed == 'true' }}
         run: echo "✅ Changes detected in thisCanChange/** — running downstream steps"
       - name: Not Allowed echo
-        if: ${{ steps.relevant-changes.outputs.allowed == false }}
+        if: ${{ steps.relevant-changes.outputs.allowed == 'false' }}
         run: echo "🚨 Changes not detected in thisCanChange/** — running downstream steps"
