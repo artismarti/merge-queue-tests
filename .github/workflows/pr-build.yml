@@ -1,5 +1,11 @@
 name: PR Build and Deploy
 on:
+  # temporary workaround for
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to build/deploy"
+        required: true
   workflow_run:
     workflows: [PR Verify]
     types: [completed]
@@ -35,6 +41,8 @@ jobs:
         uses: dorny/paths-filter@v3
         id: relevant-changes
         with:
+          base: main
+          ref: ${{ github.event.workflow_run.head_branch }}
           filters: |
             app:
               - '**/*'
