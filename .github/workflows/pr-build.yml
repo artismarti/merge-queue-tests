@@ -1,5 +1,4 @@
-name: PR Build & Deploy (Minute Check)
-
+name: PR Build and Deploy
 on:
   workflow_run:
     workflows: [PR Verify]
