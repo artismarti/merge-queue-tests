@@ -33,49 +33,60 @@ jobs:
             echo "Odd → PASS"
             exit 0
           fi
-
-  detect-relevant-changes:
-    # This job is only run when:
-    # 1) the github.event_name == 'pull_request' (and not `merge_group`)
-    # 2) the pr-verify workflow conclusion is 'success'
-    name: "Merge Queue and Relevant Files Checks"
+  debug-github-event:
     runs-on: ubuntu-latest
-    needs: [schema-and-tests]
-    if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-      - name: Detect relevant changes
-        uses: dorny/paths-filter@v3
-        id: relevant-changes
-        with:
-          base: "main"
-          ref: ${{ github.ref }}
-          filters: |
-            allowed:
-              - 'thisCanChange/**'  # Only run if files in this path are changed
-      - name: Debug filter output here
+      - name: Debug GitHub event
         run: |
-          echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
-          echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
-    outputs:
-      should-run: steps.relevant-changes.outputs.allowed
+          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event_name == PR?: ${{ github.event_name == 'pull_request' }}"
+          echo "github.ref: ${{ github.ref }}"
+          echo "PR head ref: ${{ github.event.pull_request.head.ref }}"
+          echo "PR base ref: ${{ github.event.pull_request.base.ref }}"
 
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    name: "Build and Deploy"
-    needs: [detect-relevant-changes]
-    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
-    steps:
-      - name: Check current minute % 3
-        run: |
-          minute=$(date +'%M')
-          echo "Current minute: $minute"
-          if (( minute % 3 != 0 )); then
-            echo "Minute not divisible by 3 → FAIL"
-            exit 1
-          else
-            echo "Minute ÷ 3 → PASS"
-          fi
+  # detect-relevant-changes:
+  #   # This job is only run when:
+  #   # 1) the github.event_name == 'pull_request' (and not `merge_group`)
+  #   # 2) the pr-verify workflow conclusion is 'success'
+  #   name: "Merge Queue and Relevant Files Checks"
+  #   runs-on: ubuntu-latest
+  #   needs: [schema-and-tests]
+  #   if: ${{ github.event_name == 'pull_request' }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         ref: ${{ github.ref }}
+  #         fetch-depth: 0
+  #     - name: Detect relevant changes
+  #       uses: dorny/paths-filter@v3
+  #       id: relevant-changes
+  #       with:
+  #         base: "main"
+  #         ref: ${{ github.ref }}
+  #         filters: |
+  #           allowed:
+  #             - 'thisCanChange/**'  # Only run if files in this path are changed
+  #     - name: Debug filter output here
+  #       run: |
+  #         echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
+  #         echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
+  #   outputs:
+  #     should-run: steps.relevant-changes.outputs.allowed
+
+  # build-and-deploy:
+  #   runs-on: ubuntu-latest
+  #   name: "Build and Deploy"
+  #   needs: [detect-relevant-changes]
+  #   if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
+  #   steps:
+  #     - name: Check current minute % 3
+  #       run: |
+  #         minute=$(date +'%M')
+  #         echo "Current minute: $minute"
+  #         if (( minute % 3 != 0 )); then
+  #           echo "Minute not divisible by 3 → FAIL"
+  #           exit 1
+  #         else
+  #           echo "Minute ÷ 3 → PASS"
+  #         fi
