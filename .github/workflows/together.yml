@@ -17,7 +17,7 @@ on:
       - checks_requested
 
 jobs:
-  check-if-merge-queue:
+  check-branch-type:
     name: "Check if Merge Queue Branch"
     runs-on: ubuntu-latest
 
@@ -36,90 +36,83 @@ jobs:
     outputs:
       is-merge-queue: ${{ steps.merge-queue.outputs.is-merge-queue }}
 
+  detect-relevant-changes:
+    name: "Relevant Files Checks"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+      - name: Detect relevant changes
+        uses: dorny/paths-filter@v3
+        id: relevant-changes
+        with:
+          base: "main"
+          ref: ${{ github.ref }}
+          filters: |
+            allowed:
+              - 'thisCanChange/**'  # Only run if files in this path are changed
+      - name: Debug filter output here
+        run: |
+          echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
+          echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
+    outputs:
+      should-run: ${{ steps.relevant-changes.outputs.allowed }}
+
   schema-and-tests:
     name: "Schema and Tests"
     runs-on: ubuntu-latest
-    needs: check-if-merge-queue
+    needs: detect-relevant-changes
+    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
     steps:
       - name: Generate random number and test odd/even
         run: |
           num=$(( RANDOM % 100 ))
-          echo "is this a merge queue branch? ${{ needs.check-if-merge-queue.outputs.is-merge-queue }}"
           echo "Number is $num"
-          if ${{ needs.check-if-merge-queue.outputs.is-merge-queue == 'true' }}; then
-            echo "Merge queue branch - skipping odd/even check"
-          elif ${{ needs.check-if-merge-queue.outputs.is-merge-queue == 'false' }}; then
-            echo "PR branch - checking odd/even"
+          if (( num % 2 == 0 )); then
+            echo "Number is even"
           else
-            echo "Neither odd nor even"
+            echo "Number is odd"
           fi
           exit 0
 
-  # detect-relevant-changes:
-  #   # This job is only run when:
-  #   # 1) the github.event_name == 'pull_request' (and not `merge_group`)
-  #   # 2) the pr-verify workflow conclusion is 'success'
-  #   name: "Merge Queue and Relevant Files Checks"
-  #   runs-on: ubuntu-latest
-  #   needs: [schema-and-tests]
-  #   if: ${{ github.event_name == 'pull_request' }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         ref: ${{ github.ref }}
-  #         fetch-depth: 0
-  #     - name: Detect relevant changes
-  #       uses: dorny/paths-filter@v3
-  #       id: relevant-changes
-  #       with:
-  #         base: "main"
-  #         ref: ${{ github.ref }}
-  #         filters: |
-  #           allowed:
-  #             - 'thisCanChange/**'  # Only run if files in this path are changed
-  #     - name: Debug filter output here
-  #       run: |
-  #         echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
-  #         echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
-  #   outputs:
-  #     should-run: ${{ steps.relevant-changes.outputs.allowed }}
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: "Build and Deploy"
+    needs: [detect-relevant-changes, check-branch-type]
+    if: ${{ needs.check-branch-type.outputs.is-merge-queue == 'false' && needs.detect-relevant-changes.outputs.should-run == 'true' }}
+    steps:
+      - name: Check current minute % 3
+        run: |
+          minute=$(date +'%M')
+          echo "Current minute: $minute"
+          if (( minute % 3 != 0 )); then
+            echo "Minute not divisible by 3 → FAIL"
+            exit 1
+          else
+            echo "Minute ÷ 3 → PASS"
+          fi
 
-  # build-and-deploy:
-  #   runs-on: ubuntu-latest
-  #   name: "Build and Deploy"
-  #   needs: [detect-relevant-changes]
-  #   if: ${{ needs.detect-relevant-changes.outputs.should-run == 'false' }}
-  #   steps:
-  #     - name: Check current minute % 3
-  #       run: |
-  #         minute=$(date +'%M')
-  #         echo "Current minute: $minute"
-  #         if (( minute % 3 != 0 )); then
-  #           echo "Minute not divisible by 3 → FAIL"
-  #           exit 1
-  #         else
-  #           echo "Minute ÷ 3 → PASS"
-  #         fi
+  pr-valid:
+    name: "PR Validation"
+    runs-on: ubuntu-latest
+    needs: [schema-and-tests, build-and-deploy]
+    if: ${{ always() }}
+    steps:
+      - name: Debug job results
+        run: |
+          echo "schema-and-tests result: ${{ needs.schema-and-tests.result }}"
+          echo "build-and-deploy result: ${{ needs.build-and-deploy.result }}"
+      - name: Check required jobs
+        run: |
+          set -x
+          # Fail if any mandatory jobs failed
+          if [[ "${{ needs.schema-and-tests.result }}"       != "success" ]]  && [[ "${{ needs.schema-and-tests.result }}" != "skipped" ]] || \
+              [[ "${{ needs.build-and-deploy.result }}" != "success" ]] && [[ "${{ needs.build-and-deploy.result }}" != "skipped" ]]; then
+            exit 1
+          fi
 
-  # pr-valid:
-  #   name: "PR Validation"
-  #   runs-on: ubuntu-latest
-  #   needs: [schema-and-tests, build-and-deploy]
-  #   if: ${{ always() }}
-  #   steps:
-  #     - name: Debug job results
-  #       run: |
-  #         echo "schema-and-tests result: ${{ needs.schema-and-tests.result }}"
-  #         echo "build-and-deploy result: ${{ needs.build-and-deploy.result }}"
-  #     - name: Check required jobs
-  #       run: |
-  #         set -x
-  #         # Fail if any mandatory jobs failed
-  #         if [[ "${{ needs.schema-and-tests.result }}"       != "success" ]] || \
-  #            [[ "${{ needs.build-and-deploy.result }}" != "success" ]] && [[ "${{ needs.build-and-deploy.result }}" != "skipped" ]]; then
-  #           exit 1
-  #         fi
-
-  #     - name: PR Validation Complete
-  #       run: |
-  #         echo "All required checks passed (deploy was either skipped or successful). 🎉"
+      - name: PR Validation Complete
+        run: |
+          echo "All required checks passed (deploy was either skipped or successful). 🎉"
