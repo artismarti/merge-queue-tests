@@ -20,41 +20,40 @@ jobs:
   check-if-merge-queue:
     name: "Check if Merge Queue Branch"
     runs-on: ubuntu-latest
-    # run on either PR or merge-queue trigger
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
 
     steps:
       - name: Detect merge-queue event
         id: merge-queue
         run: |
-          if [[ "${{ github.event_name }}" == "merge_group" ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "event output mq: ${{ github.event_name }}"
-            echo "This is a merge-queue run"
-            echo "is-merge-queue=true" >> $GITHUB_OUTPUT
-          else
-            echo "event output pr: ${{ github.event_name }}"
-            echo "This is a normal PR run"
+            echo "PR branch - checking odd/even"
             echo "is-merge-queue=false" >> $GITHUB_OUTPUT
+          else
+            echo "NOT PR"
+            echo "is-merge-queue=true" >> $GITHUB_OUTPUT
           fi
     outputs:
       is-merge-queue: ${{ steps.merge-queue.outputs.is-merge-queue }}
 
-  # schema-and-tests:
-  #   name: "Schema and Tests"
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Generate random number and test odd/even
-  #       run: |
-  #         num=$(( RANDOM % 100 ))
-  #         echo "Number is $num"
-  #         if (( num % 2 == 0 )); then
-  #           echo "Even → FAIL"
-  #           echo "Faking passing because we know that this bit works correctly as a trigger"
-  #           exit 0
-  #         else
-  #           echo "Odd → PASS"
-  #           exit 0
-  #         fi
+  schema-and-tests:
+    name: "Schema and Tests"
+    runs-on: ubuntu-latest
+    needs: check-if-merge-queue
+    steps:
+      - name: Generate random number and test odd/even
+        run: |
+          num=$(( RANDOM % 100 ))
+          echo "is this a merge queue branch? ${{ needs.check-if-merge-queue.outputs.is-merge-queue }}"
+          echo "Number is $num"
+          if ${{ needs.check-if-merge-queue.outputs.is-merge-queue == 'true' }}; then
+            echo "Merge queue branch - skipping odd/even check"
+          elif ${{ needs.check-if-merge-queue.outputs.is-merge-queue == 'false' }}; then
+            echo "PR branch - checking odd/even"
+          else
+            echo "Neither odd nor even"
+          fi
+          exit 0
 
   # detect-relevant-changes:
   #   # This job is only run when:
