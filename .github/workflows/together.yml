@@ -34,8 +34,7 @@ jobs:
             echo "is-merge-queue=true" >> $GITHUB_OUTPUT
           fi
     outputs:
-      is-merge-queue: "true"
-      # is-merge-queue: ${{ steps.merge-queue.outputs.is-merge-queue }}
+      is-merge-queue: ${{ steps.merge-queue.outputs.is-merge-queue }}
 
   detect-relevant-changes:
     name: "Relevant Files Checks"
@@ -59,14 +58,13 @@ jobs:
           echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
           echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
     outputs:
-      should-run: "false"
-      # should-run: ${{ steps.relevant-changes.outputs.allowed }}
+      should-run: ${{ steps.relevant-changes.outputs.allowed }}
 
   schema-and-tests:
     name: "Schema and Tests"
     runs-on: ubuntu-latest
     needs: detect-relevant-changes
-    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'false' }}
+    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
     steps:
       - name: Generate random number and test odd/even
         run: |
