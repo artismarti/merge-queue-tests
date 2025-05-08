@@ -1,4 +1,4 @@
-name: Verify and Build and Deploy
+name: PR Checks
 
 on:
   pull_request:
