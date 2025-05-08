@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "Build and Deploy"
     needs: [detect-relevant-changes]
-    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
+    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'false' }}
     steps:
       - name: Check current minute % 3
         run: |
