@@ -33,46 +33,47 @@ jobs:
             echo "Odd → PASS"
             exit 0
           fi
-  debug-github-event:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Debug GitHub event
-        run: |
-          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event_name == PR?: ${{ github.event_name == 'pull_request' }}"
-          echo "github.ref: ${{ github.ref }}"
-          echo "PR head ref: ${{ github.event.pull_request.head.ref }}"
-          echo "PR base ref: ${{ github.event.pull_request.base.ref }}"
 
-  # detect-relevant-changes:
-  #   # This job is only run when:
-  #   # 1) the github.event_name == 'pull_request' (and not `merge_group`)
-  #   # 2) the pr-verify workflow conclusion is 'success'
-  #   name: "Merge Queue and Relevant Files Checks"
-  #   runs-on: ubuntu-latest
-  #   needs: [schema-and-tests]
-  #   if: ${{ github.event_name == 'pull_request' }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         ref: ${{ github.ref }}
-  #         fetch-depth: 0
-  #     - name: Detect relevant changes
-  #       uses: dorny/paths-filter@v3
-  #       id: relevant-changes
-  #       with:
-  #         base: "main"
-  #         ref: ${{ github.ref }}
-  #         filters: |
-  #           allowed:
-  #             - 'thisCanChange/**'  # Only run if files in this path are changed
-  #     - name: Debug filter output here
-  #       run: |
-  #         echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
-  #         echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
-  #   outputs:
-  #     should-run: steps.relevant-changes.outputs.allowed
+  detect-relevant-changes:
+    # This job is only run when:
+    # 1) the github.event_name == 'pull_request' (and not `merge_group`)
+    # 2) the pr-verify workflow conclusion is 'success'
+    name: "Merge Queue and Relevant Files Checks"
+    runs-on: ubuntu-latest
+    needs: [schema-and-tests]
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+      - name: Detect relevant changes
+        uses: dorny/paths-filter@v3
+        id: relevant-changes
+        with:
+          base: "main"
+          ref: ${{ github.ref }}
+          filters: |
+            allowed:
+              - 'thisCanChange/**'  # Only run if files in this path are changed
+      - name: Debug filter output here
+        run: |
+          echo "steps.relevant-changes.outputs.allowed = ${{ steps.relevant-changes.outputs.allowed }}"
+          echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
+    outputs:
+      should-run: ${{ steps.relevant-changes.outputs.allowed }}
+      should-check-syntax: steps.relevant-changes.outputs.allowed
+
+  debug-detect-output:
+    name: Debug detect-relevant-changes Output
+    runs-on: ubuntu-latest
+    needs: [detect-relevant-changes]
+    if: ${{ always() }}
+    steps:
+      - name: Show should-run value
+        run: |
+          echo "detect-relevant-changes.should-run = '${{ needs.detect-relevant-changes.outputs.should-run }}'"
+          echo "detect-relevant-changes.should-check-syntax = '${{ needs.detect-relevant-changes.outputs.should-check-syntax }}'"
 
   # build-and-deploy:
   #   runs-on: ubuntu-latest
