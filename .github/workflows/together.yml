@@ -62,32 +62,20 @@ jobs:
           echo "show outputs: ${{ toJson(steps.relevant-changes.outputs) }}"
     outputs:
       should-run: ${{ steps.relevant-changes.outputs.allowed }}
-      should-check-syntax: steps.relevant-changes.outputs.allowed
 
-  debug-detect-output:
-    name: Debug detect-relevant-changes Output
+  build-and-deploy:
     runs-on: ubuntu-latest
+    name: "Build and Deploy"
     needs: [detect-relevant-changes]
-    if: ${{ always() }}
+    if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
     steps:
-      - name: Show should-run value
+      - name: Check current minute % 3
         run: |
-          echo "detect-relevant-changes.should-run = '${{ needs.detect-relevant-changes.outputs.should-run }}'"
-          echo "detect-relevant-changes.should-check-syntax = '${{ needs.detect-relevant-changes.outputs.should-check-syntax }}'"
-
-  # build-and-deploy:
-  #   runs-on: ubuntu-latest
-  #   name: "Build and Deploy"
-  #   needs: [detect-relevant-changes]
-  #   if: ${{ needs.detect-relevant-changes.outputs.should-run == 'true' }}
-  #   steps:
-  #     - name: Check current minute % 3
-  #       run: |
-  #         minute=$(date +'%M')
-  #         echo "Current minute: $minute"
-  #         if (( minute % 3 != 0 )); then
-  #           echo "Minute not divisible by 3 → FAIL"
-  #           exit 1
-  #         else
-  #           echo "Minute ÷ 3 → PASS"
-  #         fi
+          minute=$(date +'%M')
+          echo "Current minute: $minute"
+          if (( minute % 3 != 0 )); then
+            echo "Minute not divisible by 3 → FAIL"
+            exit 1
+          else
+            echo "Minute ÷ 3 → PASS"
+          fi
